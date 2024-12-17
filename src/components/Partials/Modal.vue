@@ -5,7 +5,7 @@
       class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50"
   >
     <!-- Contenido del modal -->
-    <div class="relative bg-white rounded-lg shadow-lg p-6 max-w-lg w-full">
+    <div class="relative bg-white rounded-lg shadow-lg p-6 max-w-4xl w-full">
       <!-- Botón para cerrar el modal -->
       <button
           @click="closeModal"
@@ -15,7 +15,7 @@
       </button>
 
       <!-- Título del modal -->
-      <h2 class="text-2xl font-semibold mb-4 text-gray-800">
+      <h2 class="text-xl font-semibold mb-4 text-primary">
         {{ title }}
       </h2>
 
@@ -27,6 +27,7 @@
       <!-- Botones opcionales -->
       <div class="mt-6 flex justify-end gap-2">
         <button
+            v-if="cancelButton"
             @click="closeModal"
             class="px-4 py-2 rounded bg-gray-300 text-gray-700 hover:bg-gray-400 transition"
         >
@@ -53,7 +54,11 @@ export default {
     },
     title: {
       type: String,
-      default: "Modal Title"
+      default: ""
+    },
+    cancelButton:{
+      type: Boolean,
+      default: true,
     }
   },
   methods: {

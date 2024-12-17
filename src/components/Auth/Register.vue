@@ -111,18 +111,27 @@ export default {
   methods: {
     async registerUser() {
       try {
-        const response = await axios.post("https://flickr-service.onrender.com/auth/register", this.data);
-
-        // Registro exitoso
-        console.log("Registro exitoso:", response.data);
-        alert("Usuario registrado con éxito. Serás redirigido al inicio de sesión.");
+        const response = await axios.post("/api/auth/register", this.data);
+        this.$notify(
+            {
+              group: 'generic',
+              title: 'Excelente!',
+              text: 'Usuario registrado con éxito. Serás redirigido al inicio de sesión.',
+            },
+            5000,
+        )
         this.$router.push({ name: "Login" }); // Redirige al login
       } catch (error) {
+        const errorMsg = error.response?.data?.error || "Hubo un error al registrar el usuario.";
+        this.$notify(
+            {
+              group: 'error',
+              title: 'Lo sentimos!',
+              text: errorMsg,
+            },
+            5000,
+        )
         console.error("Error al registrar usuario:", error.response?.data || error.message);
-
-        // Manejo de errores
-        const errorMsg = error.response?.data?.message || "Hubo un error al registrar el usuario.";
-        alert(errorMsg);
       }
     },
     goToRoute(routeName) {

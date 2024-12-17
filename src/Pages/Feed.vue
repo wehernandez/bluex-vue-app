@@ -1,77 +1,127 @@
 <template>
   <div>
     <Header></Header>
-    <div class="max-container padding-container  pt-40">
-      <div class="w-12/12">
+    <div class="pt-40">
+      <div class="w-12/12 relative">
         <h1 class="bold-40 text-primary text-center">
-          ¡Que bueno verte de nuevo <span class="text-secondary">Fernando</span>!
+          ¡{{textTitle}}<span class="text-secondary"> Fernando</span>!
         </h1>
-      </div>
-      <div class="flexCenter flex-col pb-10">
-        <div class="w-6/12 py-5">
-          <h3 class="bold-24 text-gray-30">
-            ¿Cual es tu feed hoy?
-          </h3>
+        <div class="absolute top-0 left-0">
+          <img
+              src="/img/manoRock.png"
+              loading="lazy"
+              class=""
+          />
         </div>
-        <div class="w-6/12">
-          <input v-model="searchText" @keydown.enter="resetSearch" type="text" class="input-field-search py-7" placeholder="Escribe aqui los diferentes tags que deseas buscar">
+        <div class="absolute top-0 right-0">
+          <img
+              src="/img/manoGood.png"
+              loading="lazy"
+              class=""
+          />
         </div>
       </div>
-      <div class="p-4">
-        <!-- Contenedor principal tipo Masonry -->
-        <div class="columns-2 md:columns-4 gap-4">
-          <!-- Bucle de imágenes -->
-          <div
-              v-for="image in images"
-              :key="image.id"
-              class="mb-4 break-inside-avoid"
-          >
-            <img
-                :src="image.media"
-                :alt="image.title"
-                class="w-full rounded-lg shadow-md object-cover"
-            />
+      <div class="max-container padding-container ">
+        <div class="flexCenter flex-col pb-10">
+          <div class="w-6/12 py-5">
+            <h3 class="bold-24 text-gray-30">
+              ¿Cual es tu feed hoy?
+            </h3>
+          </div>
+          <div class="w-6/12 relative">
+            <input
+                v-model="searchText"
+                @keydown.enter="resetSearch"
+                type="text"
+                class="input-field-search py-7"
+                placeholder="Escribe aquí lo que deseas buscar">
+            <div class="absolute top-2 right-3">
+              <img
+                  src="/img/search.png"
+                  loading="lazy"
+                  class="h-10 w-10"
+              />
+            </div>
+            <div  class="flex flex-row items-center h-16">
+              <h3 class="text-primary font-bold pb-2"> Tags:</h3>
+              <input
+                  @keydown.enter="handleLocalTag()"
+                  v-model="localTag"
+                  class="ml-4 input-tag" type="text" placeholder="Añade tags a tu busqueda escribiendo acá">
+            </div>
+            <div>
+              <Tag
+                  class="mx-1"
+                  v-for="(tag, index) in currentTags"
+                  :key="index"
+                  @deleteTag="deleteTag"
+                  :can-close="true"
+                  :text="tag">
+              </Tag>
+            </div>
           </div>
         </div>
-        <!-- Botón de cargar más -->
-        <div v-if="currentPage < maxPages" class="text-center mt-4">
-          <button
-              @click="fetchImages(currentPage + 1)"
-              class="btn-primary-outline btn-large btn-dense mt-3 w-10/12 3xl:w-8/12"
-          >
-            Cargar más
-          </button>
+        <div v-if="loading">
+          <div class="mt-10 3xl:mt-16 h-40">
+            <loader></loader>
+          </div>
         </div>
-        <div v-else class="text-center text-gray-500 mt-4">
-          <p>No hay más imágenes para mostrar.</p>
+        <div v-else class="p-4">
+          <!-- Contenedor principal -->
+          <div class="columns-2 md:columns-4 gap-4">
+            <!-- Bucle de imágenes -->
+            <div
+                @click="handleImageDetail(image)"
+                v-for="(image, index) in images"
+                :key="image.id"
+                class="mb-4 break-inside-avoid relative group image-slide-up"
+            >
+              <img
+                  :src="image.media"
+                  :alt="image.title"
+                  class="w-full rounded-lg shadow-md object-cover"
+              />
+              <!-- Overlay negro con opacidad -->
+              <div
+                  class="absolute inset-0 bg-black opacity-0 group-hover:opacity-50 transition duration-300 ease-in-out rounded-lg"
+              >
+                <p class="text-white ml-4 mt-4">No.{{index + 1}}</p>
+              </div>
+            </div>
+          </div>
+          <!-- Botón de cargar más -->
+          <div v-if="images.length > 0 &&  currentPage < maxPages" class="flexCenter mt-4">
+            <button
+                @click="fetchImages(currentPage + 1)"
+                class="btn-primary-outline btn-large btn-dense mt-3 w-10/12 3xl:w-8/12"
+            >
+              <svg v-if="loadingCharge" aria-hidden="true" class="w-4 h-4 text-gray-200 animate-spin dark:text-gray-15 fill-blue-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
+                <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="currentFill"/>
+              </svg>
+              {{loadingCharge? "Cargando" : "Cargar más"}}
+            </button>
+          </div>
         </div>
-      </div>
-      <div>
-        <!-- Botón que abre el modal -->
-        <button
-            @click="showDetail = true"
-            class="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600 transition"
-        >
-          Abrir Modal
-        </button>
-
-        <!-- Componente del modal -->
+        <!-- Modal detalle -->
         <Modal
             :show="showDetail"
-            title="¡Hola desde el Modal!"
             @close="showDetail = false"
             @confirm="handleConfirm"
+            :cancel-button="false"
         >
-          <div>
-            <img
-                :src="currentItem.media"
-                :alt="currentItem.title"
-                class="w-full rounded-lg shadow-md object-cover"
-            />
-          </div>
+          <detail-container :current-item="currentItem" @addTag="addTag"></detail-container>
         </Modal>
       </div>
     </div>
+    <!-- Botón de scroll hacia arriba -->
+    <button
+        v-if="showScrollButton"
+        @click="scrollToTop"
+        class="fixed bottom-6 right-6 px-4 py-3 bg-secondary text-white rounded-lg shadow-lg transition-opacity duration-300"
+    >
+      ↑
+    </button>
   </div>
 </template>
 
@@ -79,10 +129,13 @@
 import Header from "../components/Header.vue";
 import axios from "axios";
 import Modal from "../components/Partials/Modal.vue";
+import DetailContainer from "../components/Feed/DetailContainer.vue";
+import Loader from "../components/Partials/loader.vue";
+import Tag from "../components/Partials/Tag.vue";
 
 export default {
   name: "Feed",
-  components: {Modal, Header},
+  components: {Tag, Loader, DetailContainer, Modal, Header},
   data() {
     return {
       showDetail: false,
@@ -106,1639 +159,45 @@ export default {
       },
       screenWidth: window.innerWidth,
       searchText : "",
-      currentPage: 5,
-      maxPages: 10, // Se establece después de la primera solicitud
-      //images: []
-      images: [
-        {
-          "id": "29729305533",
-          "title": "View from the Klammalm",
-          "media": "https://live.staticflickr.com/5503/29729305533_c5a36e0827.jpg",
-          "date_taken": "2016-09-03 10:58:16",
-          "description": "20160903_Urla_4465.jpg",
-          "author": "Peter Goll Thanks for 32 Mio views",
-          "views": "9536",
-          "tags": [
-            "südtirol",
-            "italien",
-            "italy",
-            "southtyrol",
-            "natur",
-            "nature",
-            "holiday",
-            "vacation",
-            "urlaub",
-            "2016",
-            "nikon",
-            "nikkor",
-            "d800",
-            "ratschings",
-            "berge",
-            "alpen",
-            "hill",
-            "mountain",
-            "alps",
-            "wandern",
-            "hike",
-            "tramp",
-            "sterzing",
-            "mountainracines",
-            "grün",
-            "green",
-            "wolken",
-            "clouds",
-            "sky",
-            "himmel",
-            "baum",
-            "tree",
-            "klammalm",
-            "blue",
-            "landschaft",
-            "landscape",
-            "felsen",
-            "rock"
-          ]
-        },
-        {
-          "id": "30945933062",
-          "title": "Umlaufgraben Dechsendorfer Weiher",
-          "media": "https://live.staticflickr.com/5807/30945933062_2aba4c5dc2.jpg",
-          "date_taken": "2016-10-23 14:41:21",
-          "description": "20161023_Natu_5925",
-          "author": "Peter Goll Thanks for 32 Mio views",
-          "views": "9044",
-          "tags": [
-            "dechsendorf",
-            "herbst",
-            "natur",
-            "erlangen",
-            "germany",
-            "2016",
-            "nikon",
-            "nikkor",
-            "d800",
-            "autumn",
-            "fall",
-            "baum",
-            "seebachgrund",
-            "franken",
-            "franconia",
-            "bavaria",
-            "bayern",
-            "deutschland",
-            "heimat",
-            "homeland",
-            "landschaft",
-            "landscape",
-            "nature",
-            "wood",
-            "wald",
-            "tree",
-            "forrest",
-            "blätter",
-            "leaves",
-            "foliage",
-            "laub",
-            "dechsendorferweiher",
-            "umlaufgraben",
-            "bach"
-          ]
-        },
-        {
-          "id": "23004308964",
-          "title": "the clouds...........",
-          "media": "https://live.staticflickr.com/603/23004308964_b57b768532.jpg",
-          "date_taken": "2015-08-17 17:27:43",
-          "description": "Ohrid lake, Macedonia                       ",
-          "author": "atsjebosma",
-          "views": "2164",
-          "tags": [
-            "lake",
-            "tree",
-            "reed",
-            "landscape",
-            "meer",
-            "ngc",
-            "wolken",
-            "boom",
-            "ohrid",
-            "lucht",
-            "riet",
-            "landschap",
-            "kalista",
-            "2015",
-            "atsjebosma"
-          ]
-        },
-        {
-          "id": "31129143605",
-          "title": "Nature",
-          "media": "https://live.staticflickr.com/5731/31129143605_29bb61ae45.jpg",
-          "date_taken": "2016-11-20 11:52:42",
-          "description": "",
-          "author": "Kevin_Jeffries",
-          "views": "4011",
-          "tags": [
-            "jeffries",
-            "nature",
-            "pond",
-            "water",
-            "newzealand",
-            "nikon",
-            "nikkor",
-            "new",
-            "park",
-            "tree",
-            "color",
-            "d7100",
-            "1685mm",
-            "plant",
-            "reflection",
-            "sky",
-            "bridge",
-            "landscape",
-            "grass",
-            "idyllic",
-            "shade",
-            "spring"
-          ]
-        },
-        {
-          "id": "31819282811",
-          "title": "Sun road",
-          "media": "https://live.staticflickr.com/620/31819282811_6f5db1de5c.jpg",
-          "date_taken": "2016-11-12 09:11:08",
-          "description": "",
-          "author": "mara.arantes",
-          "views": "2777",
-          "tags": [
-            "sun",
-            "road",
-            "sky",
-            "tree",
-            "landscape",
-            "digital",
-            "nikon"
-          ]
-        },
-        {
-          "id": "26673921213",
-          "title": "Emergence",
-          "media": "https://live.staticflickr.com/7557/26673921213_0c13cd4678.jpg",
-          "date_taken": "2016-05-15 08:29:54",
-          "description": "",
-          "author": "zebedee1971",
-          "views": "6804",
-          "tags": [
-            "sun",
-            "tree",
-            "water",
-            "grass",
-            "fog",
-            "sunrise",
-            "fence",
-            "wow",
-            "landscape",
-            "stream",
-            "farm",
-            "foggy",
-            "calm",
-            "farmland",
-            "brilliant",
-            "channel",
-            "natureandnothingelse"
-          ]
-        },
-        {
-          "id": "29264634974",
-          "title": "La Torre a Bibbiano",
-          "media": "https://live.staticflickr.com/8020/29264634974_118fd2be29.jpg",
-          "date_taken": "2015-08-19 10:50:08",
-          "description": "La Torre is a castle near Buonconvento and dates back to the thirteenth century and once belonged to powerful families of Siena.\n\nThe castle was completely restored in the second half of the 800, taking on its current appearance: it is made up of two buildings that overlook a large courtyard surrounded on two sides by walls surrounded by a moat.\n\nNow they are doing new restorations who knows, maybe it will turn into a luxury resort. ",
-          "author": "Frags of Life",
-          "views": "9353",
-          "tags": [
-            "outdoors",
-            "beauty",
-            "castle",
-            "tranquilscene",
-            "italianculture",
-            "traveldestinations",
-            "day",
-            "builtstructure",
-            "southerneurope",
-            "photography",
-            "idyllic",
-            "colour",
-            "italy",
-            "nobody",
-            "landscape",
-            "landscaperenaissance",
-            "tuscany",
-            "tree",
-            "horizontal"
-          ]
-        },
-        {
-          "id": "28805645205",
-          "title": "Cascades Sutherland",
-          "media": "https://live.staticflickr.com/8117/28805645205_3403e48417.jpg",
-          "date_taken": "2016-08-02 16:28:58",
-          "description": "<b>Parc national du Lac-Témiscouata</b>\nSecteur des chutes Sutherland, Témiscouata, Québec\n\nSitué au Bas-Saint-Laurent dans la MRC de Témiscouata, le parc national du Lac-Témiscouata s'étend autour du plus grand et du plus majestueux lac de la région, le lac Témiscouata. Ce territoire est doté d’atouts naturels remarquables et d’une richesse exceptionnelle sur le plan archéologique.  <a href=\"http://www.sepaq.com/pq/tem/\" rel=\"noreferrer nofollow\">Source</a>\n\n===========================================================\n<i><b>© Guylaine Bégin.</b> L'utilisation sans ma permission est illégale.</i>\n===========================================================\n\n<b>Parc national du Lac-Temiscouata (National Park)</b>\nSutherland Sector, Temiscouata, Quebec\n\nParc national du Lac-Temiscouata is set in Bas-Saint-Laurent in the regional county municipality of Témiscouata. Lac Témiscouata, this territory has remarkable natural assets and exceptional archaeological wealth.   <a href=\"http://www.sepaq.com/pq/tem/index.dot?language_id=1\" rel=\"noreferrer nofollow\">Source</a>\n\n===========================================================\n<i><b>© Guylaine Bégin.</b> Use without permission is illegale.</i>\n===========================================================",
-          "author": "Guylaine Begin",
-          "views": "12242",
-          "tags": [
-            "parcnationaldulactémiscouata",
-            "bassaintlaurent",
-            "bsl",
-            "canada",
-            "parcsquébec",
-            "québec",
-            "park",
-            "été",
-            "img287789tonemappé",
-            "sutherlandbrook",
-            "nature",
-            "landscape",
-            "paysage",
-            "parcnational",
-            "forest",
-            "nationalpark",
-            "waterfall",
-            "sentiersutherland",
-            "hiking",
-            "chute",
-            "sutherlandtrail",
-            "ruisseau",
-            "cassades",
-            "cascade",
-            "forêt",
-            "arbre",
-            "tree",
-            "eau",
-            "water",
-            "summer",
-            "randonnée",
-            "chutedeau",
-            "brook",
-            "ruisseausutherland",
-            "440",
-            "2162411649",
-            "442",
-            "441"
-          ]
-        },
-        {
-          "id": "22486165663",
-          "title": "Autumnal Eifel",
-          "media": "https://live.staticflickr.com/668/22486165663_70c5165cd6.jpg",
-          "date_taken": "2015-11-08 14:28:15",
-          "description": "",
-          "author": "Netsrak",
-          "views": "6186",
-          "tags": [
-            "autumn",
-            "trees",
-            "sky",
-            "tree",
-            "fall",
-            "colors",
-            "field",
-            "forest",
-            "de",
-            "landscape",
-            "deutschland",
-            "woods",
-            "sheep",
-            "meadow",
-            "eifel",
-            "nordrheinwestfalen",
-            "rheinbach"
-          ]
-        },
-        {
-          "id": "24251511539",
-          "title": "The End",
-          "media": "https://live.staticflickr.com/1583/24251511539_77c6a68603.jpg",
-          "date_taken": "2016-01-06 11:41:43",
-          "description": "Kallvik, Helsinki, Finland",
-          "author": "Mika Laitinen",
-          "views": "7835",
-          "tags": [
-            "ocean",
-            "sea",
-            "sky",
-            "cloud",
-            "white",
-            "snow",
-            "seascape",
-            "storm",
-            "cold",
-            "tree",
-            "ice",
-            "nature",
-            "water",
-            "skyline",
-            "suomi",
-            "finland",
-            "landscape",
-            "island",
-            "bay",
-            "frozen",
-            "helsinki",
-            "cabin",
-            "frost",
-            "cost",
-            "balticsea",
-            "steam",
-            "shore",
-            "scandinavia",
-            "isle",
-            "vuosaari",
-            "uusimaa",
-            "kallahti",
-            "kallvik",
-            "ef24105mmf4l",
-            "canon7d"
-          ]
-        },
-        {
-          "id": "24498952660",
-          "title": "Swiss countryside",
-          "media": "https://live.staticflickr.com/1700/24498952660_1f4cd02b0d.jpg",
-          "date_taken": "2015-12-30 12:15:24",
-          "description": "",
-          "author": "natureloving",
-          "views": "5905",
-          "tags": [
-            "winter",
-            "tree",
-            "nature",
-            "landscape",
-            "switzerland",
-            "countryside",
-            "nikon",
-            "d90",
-            "natureloving"
-          ]
-        },
-        {
-          "id": "29819899473",
-          "title": "fall colour 2 秋色2",
-          "media": "https://live.staticflickr.com/5664/29819899473_6e52058d1b.jpg",
-          "date_taken": "2016-10-13 13:19:22",
-          "description": "Elegant fall colour give a contrast to regular green during the season, hope you like it. 秋天的色彩和綠色構成反差，別有一番滋味",
-          "author": "T.ye",
-          "views": "4743",
-          "tags": [
-            "landscape",
-            "leaf",
-            "outdoor",
-            "outside",
-            "tree",
-            "leaves",
-            "plant",
-            "forest",
-            "dof"
-          ]
-        },
-        {
-          "id": "29291052642",
-          "title": "Mossy",
-          "media": "https://live.staticflickr.com/8374/29291052642_14e240291d.jpg",
-          "date_taken": "2016-08-28 12:02:51",
-          "description": "",
-          "author": "A Costigan",
-          "views": "6292",
-          "tags": [
-            "moss",
-            "woodland",
-            "woods",
-            "forest",
-            "green",
-            "outdoor",
-            "landscape",
-            "tree",
-            "ireland"
-          ]
-        },
-        {
-          "id": "23958141844",
-          "title": "Baum im Winter",
-          "media": "https://live.staticflickr.com/1577/23958141844_165b68bfd1.jpg",
-          "date_taken": "2016-01-22 11:09:54",
-          "description": "einsamer Baum mit Raureif ",
-          "author": "shooter1023",
-          "views": "7590",
-          "tags": [
-            "winter",
-            "tree",
-            "landscape",
-            "eis",
-            "landschaft",
-            "baum",
-            "raureif"
-          ]
-        },
-        {
-          "id": "23799068249",
-          "title": "Fleeting winter impression",
-          "media": "https://live.staticflickr.com/1658/23799068249_374569367f.jpg",
-          "date_taken": "2016-01-03 17:28:52",
-          "description": "Blick vom Beifahrersitz während der Autofahrt auf der A2 von Vlotho zurück nach Berlin\nView from the passenger seat while driving from Vlotho back to Berlin ",
-          "author": "ahmBerlin",
-          "views": "2603",
-          "tags": [
-            "winter",
-            "snow",
-            "tree",
-            "nature",
-            "landscape",
-            "view",
-            "hill",
-            "natur",
-            "january",
-            "nrw",
-            "landschaft",
-            "hilly",
-            "baum",
-            "prospect",
-            "nordrheinwestfalen",
-            "ausblick",
-            "shrubbery",
-            "januar",
-            "hügel",
-            "sträucher",
-            "winterlandschaftvschnee"
-          ]
-        },
-        {
-          "id": "21521686363",
-          "title": "Light and shade",
-          "media": "https://live.staticflickr.com/719/21521686363_47fbe6cfd5.jpg",
-          "date_taken": "2015-10-13 19:37:39",
-          "description": "Early morning light in Warwickshire.",
-          "author": "Tony / Guy@Fawkes",
-          "views": "4572",
-          "tags": [
-            "light",
-            "landscape",
-            "tree",
-            "fields",
-            "countryside",
-            "rrm",
-            "ngc"
-          ]
-        },
-        {
-          "id": "27962452456",
-          "title": "I no longer need to move forward",
-          "media": "https://live.staticflickr.com/7102/27962452456_a84b41206f.jpg",
-          "date_taken": "2016-01-28 17:14:22",
-          "description": "There are times where we just need to look where we are going, with calm and peace. Every small details can be a source of happiness.\nfollow on Facebook : <a href=\"http://www.facebook.com/KevinPhotoFrance/\" rel=\"nofollow\">KevinPhotoFrance</a>",
-          "author": "Kevin STRAGLIATI",
-          "views": "2711",
-          "tags": [
-            "road",
-            "light",
-            "sunset",
-            "sky",
-            "bw",
-            "sun",
-            "sunlight",
-            "france",
-            "tree",
-            "nature",
-            "clouds",
-            "landscape",
-            "path",
-            "horizon",
-            "country",
-            "happiness",
-            "flare",
-            "fields",
-            "campaign"
-          ]
-        },
-        {
-          "id": "29764468350",
-          "title": "The green rock",
-          "media": "https://live.staticflickr.com/5694/29764468350_25ba0c7df4.jpg",
-          "date_taken": "2016-08-29 10:30:22",
-          "description": "Gilfenklamm \n20160829_Urla_3565.jpg",
-          "author": "Peter Goll Thanks for 32 Mio views",
-          "views": "8276",
-          "tags": [
-            "südtirol",
-            "italien",
-            "italy",
-            "southtyrol",
-            "natur",
-            "nature",
-            "holiday",
-            "vacation",
-            "urlaub",
-            "2016",
-            "nikon",
-            "nikkor",
-            "d800",
-            "ratschings",
-            "berge",
-            "alpen",
-            "hill",
-            "mountain",
-            "alps",
-            "wandern",
-            "hike",
-            "tramp",
-            "sterzing",
-            "mountainracines",
-            "wood",
-            "wald",
-            "plant",
-            "pflanze",
-            "water",
-            "wasser",
-            "bach",
-            "gebirgsbach",
-            "stream",
-            "gilfenklamm",
-            "klamm",
-            "eisacktal",
-            "haus",
-            "house",
-            "landschaft",
-            "landscape",
-            "stange",
-            "grün",
-            "green",
-            "tree",
-            "moos",
-            "moss"
-          ]
-        },
-        {
-          "id": "22091329834",
-          "title": "Magic of Clouds",
-          "media": "https://live.staticflickr.com/664/22091329834_7be448f717.jpg",
-          "date_taken": "2015-11-01 08:42:53",
-          "description": "Ein Naturschauspiel das man nur einmal sieht.\nIch war zur richtigen Zeit an der richtigen Stelle.\n\nA natural spectacle that can be seen only once. I was at the right time in the right place.",
-          "author": "thomas druyen",
-          "views": "18326",
-          "tags": [
-            "november",
-            "sun",
-            "tree",
-            "fog",
-            "clouds",
-            "germany",
-            "landscape",
-            "deutschland",
-            "nikon",
-            "nebel",
-            "outdoor",
-            "herbst",
-            "himmel",
-            "wolken",
-            "elements",
-            "d750",
-            "landschaft",
-            "sonne",
-            "baum",
-            "draussen",
-            "niederrhein"
-          ]
-        },
-        {
-          "id": "22930087845",
-          "title": "Schwäbische Alb im letzten Sonnenlicht",
-          "media": "https://live.staticflickr.com/762/22930087845_13e7b2dc4e.jpg",
-          "date_taken": "2015-11-08 16:36:50",
-          "description": "",
-          "author": "Alexander Burkhardt",
-          "views": "4296",
-          "tags": [
-            "autumn",
-            "tree",
-            "fall",
-            "nature",
-            "forest",
-            "germany",
-            "landscape",
-            "deutschland",
-            "evening",
-            "licht",
-            "herbst",
-            "wiese",
-            "gras",
-            "grün",
-            "landschaft",
-            "wald",
-            "schatten",
-            "baum",
-            "lichtenstein",
-            "schwaben",
-            "badenwürttemberg",
-            "schwäbischealb",
-            "abendlicht",
-            "württemberg",
-            "detuschland",
-            "badenwrttemberg"
-          ]
-        },
-        {
-          "id": "27558073503",
-          "title": "Scary Forest",
-          "media": "https://live.staticflickr.com/7361/27558073503_5b4d1ffcef.jpg",
-          "date_taken": "2016-03-26 16:23:12",
-          "description": "Joy to the darkness is also joy in light",
-          "author": "Netsrak",
-          "views": "12333",
-          "tags": [
-            "trees",
-            "light",
-            "shadow",
-            "red",
-            "tree",
-            "green",
-            "rot",
-            "forest",
-            "germany",
-            "landscape",
-            "deutschland",
-            "licht",
-            "woods",
-            "mood",
-            "outdoor",
-            "atmosphere",
-            "grün",
-            "landschaft",
-            "wald",
-            "bäume",
-            "schatten",
-            "baum",
-            "atmosphäre",
-            "stimmung",
-            "forst"
-          ]
-        },
-        {
-          "id": "27486483233",
-          "title": "*Wistman's Wood @ ghost forest*",
-          "media": "https://live.staticflickr.com/7416/27486483233_489764f687.jpg",
-          "date_taken": "2015-06-26 14:02:10",
-          "description": "Wistman´s Wood National Nature Reserve, Dartmoor, which was believed to be haunted by ghosts and spirits:-) \n\nDanke für deinen Besuch! Thanks for visiting!\nbitte beachte/ please respect Copyright © All rights reserved",
-          "author": "Albert Wirtz @ Landscape and Nature Photography",
-          "views": "13240",
-          "tags": [
-            "twobridges",
-            "tavistock",
-            "dartmoor",
-            "wistmanswood",
-            "forest",
-            "wood",
-            "wistmans",
-            "albertwirtz",
-            "nikon",
-            "d810",
-            "nebel",
-            "mist",
-            "fog",
-            "rain",
-            "moos",
-            "mossy",
-            "farn",
-            "fern",
-            "unitedkingdom",
-            "england",
-            "greatbritain",
-            "southwestengland",
-            "devon",
-            "nationalnaturereserve",
-            "ghost",
-            "spirits",
-            "ghostforest",
-            "vereinigteskönigreich",
-            "dartmoornationalparc",
-            "~themagicofcolours~iv",
-            "laniebla",
-            "wandern",
-            "hiking",
-            "travel",
-            "nature",
-            "natur",
-            "landscape",
-            "enchantedforest",
-            "enchanted",
-            "märchenwald",
-            "fairytaile",
-            "fineart",
-            "fineartphotography",
-            "landscapefineart",
-            "tree",
-            "baum",
-            "paesaggio",
-            "paisaje",
-            "campo",
-            "campagne",
-            "campagna",
-            "paysage",
-            "naturaleza"
-          ]
-        },
-        {
-          "id": "32181324630",
-          "title": "Paint it Red",
-          "media": "https://live.staticflickr.com/633/32181324630_1d99b63230.jpg",
-          "date_taken": "2016-03-19 15:06:23",
-          "description": "The Narrows Covered Bridge as it crosses Sugar Creek",
-          "author": "tquist24",
-          "views": "6305",
-          "tags": [
-            "hdr",
-            "indiana",
-            "narrowscoveredbridge",
-            "nikon",
-            "nikond5300",
-            "outdoor",
-            "rockyhollow",
-            "sugarcreek",
-            "turkeyrunstatepark",
-            "bridge",
-            "coveredbridge",
-            "creek",
-            "geotagged",
-            "historic",
-            "landscape",
-            "park",
-            "red",
-            "reflection",
-            "reflections",
-            "river",
-            "tree",
-            "trees",
-            "water",
-            "marshall",
-            "unitedstates"
-          ]
-        },
-        {
-          "id": "29362013644",
-          "title": "Zomers Zingem (08) - He, kleine ga je mee?",
-          "media": "https://live.staticflickr.com/8779/29362013644_7d0e805576.jpg",
-          "date_taken": "2016-08-29 16:09:31",
-          "description": "Zingem (08) 29-08-2016\n\n<b>Thanks for visit, comments and awards</b>\n\n<b>TIP: Press L to view in light box or Z to zoom!</b>\n\n<b><u>No private group or multiple group invites please!</u></b>",
-          "author": "Johnny Cooman",
-          "views": "2449",
-          "tags": [
-            "zingem",
-            "vlaanderen",
-            "belgië",
-            "bel",
-            "natuur",
-            "belgium",
-            "ベルギー",
-            "flemishregion",
-            "flandre",
-            "flandes",
-            "flanders",
-            "flandern",
-            "bélgica",
-            "belgique",
-            "belgien",
-            "belgia",
-            "flhregion",
-            "vlaamseardennen",
-            "eastflanders",
-            "flora",
-            "aaa",
-            "panasonicdmcfz200",
-            "oostvlaanderen",
-            "landschap",
-            "cloudscapes",
-            "wolk",
-            "wolken",
-            "wolkformatie",
-            "wolkformaties",
-            "nuages",
-            "landscape",
-            "tree",
-            "boom",
-            "baum",
-            "arbre",
-            "architectuur",
-            "architecture",
-            "horse",
-            "caballo",
-            "cavallo",
-            "cheval",
-            "paard",
-            "pferd",
-            "thegalaxy"
-          ]
-        },
-        {
-          "id": "27755559931",
-          "title": "After the rain",
-          "media": "https://live.staticflickr.com/7267/27755559931_dc72e5965c.jpg",
-          "date_taken": "2016-05-22 19:12:31",
-          "description": "",
-          "author": "A Costigan",
-          "views": "2957",
-          "tags": [
-            "light",
-            "sunlight",
-            "tree",
-            "nature",
-            "forest",
-            "canon",
-            "woodland",
-            "landscape",
-            "eos",
-            "woods",
-            "bokeh",
-            "outdoor",
-            "bark"
-          ]
-        },
-        {
-          "id": "32209863682",
-          "title": "The Autumn Leaves",
-          "media": "https://live.staticflickr.com/491/32209863682_dea37167f6.jpg",
-          "date_taken": "2016-09-29 16:14:09",
-          "description": "Grand Canyon National Park\n\n7DWF, Crazy Tuesday Theme: &quot;Trees&quot;",
-          "author": "Hanna Tor",
-          "views": "2004",
-          "tags": [
-            "outdoor",
-            "landscape",
-            "nature",
-            "mountains",
-            "canyon",
-            "grandcanyon",
-            "tree",
-            "autumn",
-            "sky",
-            "7dwf"
-          ]
-        },
-        {
-          "id": "28319928663",
-          "title": "Kleinwalsertal",
-          "media": "https://live.staticflickr.com/8832/28319928663_b021039b88.jpg",
-          "date_taken": "2015-09-10 12:51:09",
-          "description": "Enlarge the picture for more details",
-          "author": "Netsrak",
-          "views": "7545",
-          "tags": [
-            "austria",
-            "österreich",
-            "kleinwalsertal",
-            "riezlern",
-            "hirschegg",
-            "mittelberg",
-            "berg",
-            "berge",
-            "mountain",
-            "mountains",
-            "creek",
-            "river",
-            "wildbach",
-            "fluss",
-            "flus",
-            "breitach",
-            "landschaft",
-            "landscape",
-            "bäume",
-            "baum",
-            "tree",
-            "trees",
-            "wald",
-            "forest",
-            "forst",
-            "woods",
-            "cloud",
-            "clouds",
-            "wolke",
-            "wolken"
-          ]
-        },
-        {
-          "id": "26814746125",
-          "title": "Tiens toi droit ! (stand straight)",
-          "media": "https://live.staticflickr.com/7675/26814746125_b4f1ac38d9.jpg",
-          "date_taken": "2016-05-04 17:50:01",
-          "description": "Bouleau face à l'Aiguille du Midi (3842m), Chamonix, Haute Savoie, France.",
-          "author": "Larch",
-          "views": "3088",
-          "tags": [
-            "mountain",
-            "france",
-            "tree",
-            "montagne",
-            "landscape",
-            "spring",
-            "scenery",
-            "chamonix",
-            "arbre",
-            "printemps",
-            "birchtree",
-            "bouleau",
-            "aiguilledumidi",
-            "hautesavoie"
-          ]
-        },
-        {
-          "id": "30314576004",
-          "title": "November with fog",
-          "media": "https://live.staticflickr.com/5786/30314576004_60cc4d069b.jpg",
-          "date_taken": "2016-11-18 06:15:14",
-          "description": "Thanks to everyone who took time to view, comment or fave!!",
-          "author": "mara.arantes",
-          "views": "2249",
-          "tags": [
-            "fog",
-            "mist",
-            "landscape",
-            "tree",
-            "sky",
-            "cloud",
-            "paisagem",
-            "nature",
-            "natural",
-            "sun"
-          ]
-        },
-        {
-          "id": "29978544162",
-          "title": "Zomers Zingem (12)",
-          "media": "https://live.staticflickr.com/5504/29978544162_b9ac392eae.jpg",
-          "date_taken": "2016-08-29 16:24:14",
-          "description": "Zingem 29-08-2016\n\n<b>Thanks for visit, comments and awards</b>\n\n<b>TIP: Press L to view in light box or Z to zoom!</b>\n\n<b><u>No private group or multiple group invites please!</u></b>\n",
-          "author": "Johnny Cooman",
-          "views": "2806",
-          "tags": [
-            "zingem",
-            "vlaanderen",
-            "belgië",
-            "bel",
-            "natuur",
-            "belgium",
-            "ベルギー",
-            "flemishregion",
-            "flandre",
-            "flandes",
-            "flanders",
-            "flandern",
-            "bélgica",
-            "belgique",
-            "belgien",
-            "belgia",
-            "flhregion",
-            "vlaamseardennen",
-            "eastflanders",
-            "flora",
-            "aaa",
-            "panasonicdmcfz200",
-            "oostvlaanderen",
-            "landschap",
-            "cloudscapes",
-            "wolk",
-            "wolken",
-            "wolkformatie",
-            "wolkformaties",
-            "nuages",
-            "landscape",
-            "tree",
-            "boom",
-            "baum",
-            "arbre",
-            "thegalaxy"
-          ]
-        },
-        {
-          "id": "28427301933",
-          "title": "Blond And Blue Landscape",
-          "media": "https://live.staticflickr.com/8884/28427301933_f2e890d931.jpg",
-          "date_taken": "2016-08-16 19:50:26",
-          "description": "FSC_5795",
-          "author": "marco soraperra",
-          "views": "3659",
-          "tags": [
-            "field",
-            "tuscany",
-            "valdorcia",
-            "pienza",
-            "grass",
-            "tree",
-            "trees",
-            "landscape",
-            "sky",
-            "clouds",
-            "blue",
-            "yellow",
-            "nikon",
-            "nikkor"
-          ]
-        },
-        {
-          "id": "24724965133",
-          "title": "DECAYED FENCE WITH TREE, FIELD OF SNOW, DARK SKY",
-          "media": "https://live.staticflickr.com/1568/24724965133_da50e6bc22.jpg",
-          "date_taken": "2016-02-18 00:49:10",
-          "description": "",
-          "author": "SAFIRE PHOTO 4.65M VISITS",
-          "views": "2991",
-          "tags": [
-            "winter",
-            "snow",
-            "canada",
-            "tree",
-            "field",
-            "fence",
-            "landscape",
-            "nikon",
-            "branches",
-            "ottawa",
-            "shrubs",
-            "safire",
-            "nikond810",
-            "safirephoto"
-          ]
-        },
-        {
-          "id": "19929209668",
-          "title": "summer landscape",
-          "media": "https://live.staticflickr.com/365/19929209668_b72051f64e.jpg",
-          "date_taken": "2015-07-24 10:31:16",
-          "description": "seen in gaissau, vorarlberg, austria",
-          "author": "m!ngus photografer",
-          "views": "3300",
-          "tags": [
-            "vorarlberg",
-            "gaissau",
-            "austria",
-            "österreich",
-            "fuji",
-            "xpro",
-            "landscape",
-            "landschaft",
-            "outdoor",
-            "natur",
-            "nature",
-            "tree",
-            "baum",
-            "weg",
-            "way",
-            "fotorahmen",
-            "green",
-            "blue",
-            "sky",
-            "himmel"
-          ]
-        },
-        {
-          "id": "24465503865",
-          "title": "Inviting",
-          "media": "https://live.staticflickr.com/1520/24465503865_bbe8a00c18.jpg",
-          "date_taken": "2016-01-18 14:40:27",
-          "description": "",
-          "author": "desouto",
-          "views": "4426",
-          "tags": [
-            "trees",
-            "sky",
-            "snow",
-            "tree",
-            "nature",
-            "clouds",
-            "landscape",
-            "connecticut",
-            "hdr"
-          ]
-        },
-        {
-          "id": "22436976386",
-          "title": "When Darkness disappears",
-          "media": "https://live.staticflickr.com/688/22436976386_9d625ec5eb.jpg",
-          "date_taken": "2015-05-02 06:12:14",
-          "description": "It looks as if the rising sun pushes away the clouds",
-          "author": "Netsrak",
-          "views": "4191",
-          "tags": [
-            "trees",
-            "light",
-            "shadow",
-            "tree",
-            "clouds",
-            "forest",
-            "germany",
-            "landscape",
-            "deutschland",
-            "licht",
-            "nikon",
-            "wolken",
-            "eifel",
-            "landschaft",
-            "wald",
-            "bäume",
-            "schatten",
-            "baum",
-            "rheinland",
-            "rheinbach",
-            "siebengebirge",
-            "d3200"
-          ]
-        },
-        {
-          "id": "31906768925",
-          "title": "Lakefront",
-          "media": "https://live.staticflickr.com/459/31906768925_f0dce119de.jpg",
-          "date_taken": "2016-12-25 11:09:24",
-          "description": "",
-          "author": "linwujin",
-          "views": "10145",
-          "tags": [
-            "landscape",
-            "lake",
-            "japan",
-            "十和田",
-            "tree",
-            "maple",
-            "autumn",
-            "fujifilm",
-            "xt1",
-            "xf1655",
-            "yellow",
-            "orange",
-            "nature"
-          ]
-        },
-        {
-          "id": "25381005755",
-          "title": "How Sleet It Is",
-          "media": "https://live.staticflickr.com/1690/25381005755_9142ea067a.jpg",
-          "date_taken": "2016-02-27 08:01:00",
-          "description": "Frozen Lake Michigan Shoreline, Milwaukee \n\nNikon D5100, Tamron 18-270, ISO 250, f/6.3, 250mm, 1/1000s",
-          "author": "Carl's Captures",
-          "views": "37335",
-          "tags": [
-            "ice",
-            "icicles",
-            "frozen",
-            "cold",
-            "freezing",
-            "heavy",
-            "hanging",
-            "backlight",
-            "morninglight",
-            "winter",
-            "wintry",
-            "february",
-            "landscape",
-            "minimalism",
-            "fence",
-            "railings",
-            "shoreline",
-            "tree",
-            "branches",
-            "lakemichigan",
-            "thegreatlakes",
-            "horizon",
-            "nature",
-            "outdoors",
-            "milwaukeewisconsin",
-            "nikond5100",
-            "tamron18270",
-            "path",
-            "walkway",
-            "lakepark",
-            "formations",
-            "crystal",
-            "fangs",
-            "teeth",
-            "daggers",
-            "shards",
-            "photoshopbyfehlfarben",
-            "thanksbinexo"
-          ]
-        },
-        {
-          "id": "29346839666",
-          "title": "Red River",
-          "media": "https://live.staticflickr.com/8525/29346839666_c0db490630.jpg",
-          "date_taken": "2016-08-28 18:06:35",
-          "description": "Still in Winter but very close to Spring, the Waihoa river in South Canterbury with it's red rusty tones slowly moves toward the sea.",
-          "author": "Kevin_Jeffries",
-          "views": "3467",
-          "tags": [
-            "river",
-            "winter",
-            "water",
-            "landscape",
-            "nikon",
-            "d90",
-            "nature",
-            "reflections",
-            "red",
-            "brown",
-            "newzealand",
-            "waihoa",
-            "trees",
-            "tree",
-            "canterbury",
-            "jeffries",
-            "idyllic",
-            "new",
-            "scenery",
-            "nikonflickrtrophy"
-          ]
-        },
-        {
-          "id": "27217489302",
-          "title": "When the sun is going down",
-          "media": "https://live.staticflickr.com/7283/27217489302_316ec491fe.jpg",
-          "date_taken": "2016-05-28 19:30:52",
-          "description": "",
-          "author": "Lazaros E",
-          "views": "1140",
-          "tags": [
-            "hinchingbrookcountrypark",
-            "sun",
-            "landscape",
-            "sunset",
-            "cambridgeshire",
-            "huntingdon",
-            "park",
-            "outdoor",
-            "trees",
-            "uk",
-            "flowers",
-            "plant",
-            "tree",
-            "nikon",
-            "d5200",
-            "nikonflickraward",
-            "plants",
-            "lazarose"
-          ]
-        },
-        {
-          "id": "31824829702",
-          "title": "Chair Mountain, Near Marble Colorado",
-          "media": "https://live.staticflickr.com/581/31824829702_c5965271df.jpg",
-          "date_taken": "2013-10-15 16:39:05",
-          "description": "I found this going through some old pictures and I found it was bracketed which at that time I had no idea I could make an HDR photo out of that.  \n",
-          "author": "NVR_Forfeit",
-          "views": "7668",
-          "tags": [
-            "marble",
-            "chair",
-            "mountain",
-            "nikon",
-            "d90",
-            "landscape",
-            "sunset",
-            "colors",
-            "aspen",
-            "fall",
-            "snow",
-            "tree",
-            "pine"
-          ]
-        },
-        {
-          "id": "27286602556",
-          "title": "big oak small oak",
-          "media": "https://live.staticflickr.com/7373/27286602556_23d9860e8c.jpg",
-          "date_taken": "2016-05-28 23:23:56",
-          "description": "",
-          "author": "♦ Peter & Ute Grahlmann ♦",
-          "views": "4792",
-          "tags": [
-            "tree",
-            "art",
-            "nature",
-            "clouds",
-            "germany",
-            "landscape"
-          ]
-        },
-        {
-          "id": "31350840076",
-          "title": "Advent calendar #3",
-          "media": "https://live.staticflickr.com/5765/31350840076_177a30a46f.jpg",
-          "date_taken": "2016-11-11 17:08:08",
-          "description": "Taken while sitting in the train (ICE) from Hamburg to Berlin.\nAt 170 km/h (106mph)!",
-          "author": "JayPiDee",
-          "views": "5523",
-          "tags": [
-            "adventcalendar",
-            "adventskalender",
-            "baum",
-            "deutschland",
-            "feld",
-            "germany",
-            "landschaft",
-            "mecklenburgvorpommern",
-            "schnee",
-            "sonnenuntergang",
-            "tamron",
-            "tamronspaf2875mmf28xrdi",
-            "tamron287528",
-            "winter",
-            "zeit",
-            "atmospheric",
-            "field",
-            "inverno",
-            "landscape",
-            "snow",
-            "stimmungsvoll",
-            "sunset",
-            "tree"
-          ]
-        },
-        {
-          "id": "31872565116",
-          "title": "Cry me a river",
-          "media": "https://live.staticflickr.com/452/31872565116_f1c6b87776.jpg",
-          "date_taken": "2016-12-26 11:49:08",
-          "description": "Winter dryed up Bluntau riverbed\n\nJulie London: <a href=\"https://www.youtube.com/watch?v=SwheXIa8Cl0\" rel=\"nofollow\">www.youtube.com/watch?v=SwheXIa8Cl0</a>",
-          "author": "Singflow",
-          "views": "2814",
-          "tags": [
-            "river",
-            "bluntau",
-            "winter",
-            "dry",
-            "snow",
-            "singflow",
-            "sun",
-            "light",
-            "beam",
-            "stone",
-            "tree",
-            "forest",
-            "back",
-            "landscape"
-          ]
-        },
-        {
-          "id": "32123973511",
-          "title": "Xi-An China ( 中國西安 ）",
-          "media": "https://live.staticflickr.com/687/32123973511_0b3af80ed3.jpg",
-          "date_taken": "2017-01-10 23:27:19",
-          "description": "",
-          "author": "linwujin",
-          "views": "6793",
-          "tags": [
-            "中國",
-            "西安",
-            "china",
-            "xian",
-            "tree",
-            "lake",
-            "landscape",
-            "nature",
-            "bridge",
-            "panasonic",
-            "lx100",
-            "tower",
-            "water"
-          ]
-        },
-        {
-          "id": "30030490065",
-          "title": "Golden morning",
-          "media": "https://live.staticflickr.com/8487/30030490065_46ba6b0e34.jpg",
-          "date_taken": "2016-09-29 07:19:33",
-          "description": "Thanks to everyone who took time to view, comment or fave!!",
-          "author": "mara.arantes",
-          "views": "3350",
-          "tags": [
-            "golden",
-            "mountain",
-            "rural",
-            "sunrise",
-            "tree",
-            "sky",
-            "sun",
-            "mood",
-            "brazil",
-            "landscape",
-            "foggy",
-            "plant",
-            "natureza",
-            "naturaleza",
-            "névoa",
-            "neblina",
-            "farm",
-            "nature",
-            "mist",
-            "flickr",
-            "nikon",
-            "peace",
-            "paisagem"
-          ]
-        },
-        {
-          "id": "28807314654",
-          "title": "good bye",
-          "media": "https://live.staticflickr.com/8207/28807314654_601ceaa332.jpg",
-          "date_taken": "2016-09-02 18:29:59",
-          "description": "Thanks to everyone who took time to view, comment or fave!",
-          "author": "mara.arantes",
-          "views": "3835",
-          "tags": [
-            "sunset",
-            "tree",
-            "bike",
-            "landscape",
-            "people",
-            "cloud",
-            "sky",
-            "nature",
-            "plant",
-            "naturaleza",
-            "flickr",
-            "paisagem",
-            "natureza",
-            "trees",
-            "bicicleta",
-            "grass",
-            "green",
-            "brasil",
-            "brazil",
-            "pastel",
-            "scenery",
-            "scene",
-            "eco",
-            "ecologico",
-            "ecologia",
-            "planta",
-            "digital",
-            "nikon",
-            "bycicle",
-            "arvore",
-            "sun",
-            "mood",
-            "moment",
-            "tones"
-          ]
-        },
-        {
-          "id": "22595711811",
-          "title": "\"Be like a tree and let the dead leaves drop...\"",
-          "media": "https://live.staticflickr.com/676/22595711811_ed482ea41b.jpg",
-          "date_taken": "2015-10-29 14:57:22",
-          "description": "",
-          "author": "maya the viking_girl",
-          "views": "5357",
-          "tags": [
-            "light",
-            "sunset",
-            "sea",
-            "sky",
-            "seascape",
-            "reflection",
-            "tree",
-            "beach",
-            "nature",
-            "leaves",
-            "silhouette",
-            "norway",
-            "clouds",
-            "skyscape",
-            "landscape",
-            "shadows",
-            "branches",
-            "peaceful",
-            "shades",
-            "afterglow",
-            "tjøme"
-          ]
-        },
-        {
-          "id": "30178987061",
-          "title": "Autumn (9433)",
-          "media": "https://live.staticflickr.com/8559/30178987061_c32321e6d5.jpg",
-          "date_taken": "2016-08-21 15:12:18",
-          "description": "",
-          "author": "cfalguiere",
-          "views": "3396",
-          "tags": [
-            "arbre",
-            "areailedefrance",
-            "automne",
-            "colorbrown",
-            "colorred",
-            "couleurrouge",
-            "countryfrance",
-            "datepub2016q410",
-            "dof",
-            "forest",
-            "foret",
-            "green",
-            "periodautumn",
-            "profondeurdechamp",
-            "red",
-            "rouge",
-            "saintgermainenlaye",
-            "tree",
-            "exterieur",
-            "outdoor",
-            "paysage",
-            "landscape",
-            "plante",
-            "calme",
-            "sel20161203",
-            "sel20161210",
-            "sel20170129",
-            "sel20170326",
-            "sel20170430",
-            "sel20170618",
-            "sel20170701",
-            "sel20170716",
-            "sel20170813",
-            "sel20170819",
-            "sel20171021"
-          ]
-        },
-        {
-          "id": "21669029651",
-          "title": "Benmore Bridge At Night",
-          "media": "https://live.staticflickr.com/769/21669029651_e9c23e0e93.jpg",
-          "date_taken": "2015-09-18 22:22:00",
-          "description": "This is the bridge that leads over the River Eachaig from Benmore Gardens to the East Gatehouse and Visitor Centre. I've been both over this bridge (visiting the Gardens) and under it (whilst kayaking on the river) many times :)",
-          "author": "Click And Pray",
-          "views": "3077",
-          "tags": [
-            "longexposure",
-            "bridge",
-            "tree",
-            "night",
-            "stars",
-            "landscape",
-            "scotland",
-            "footbridge",
-            "argyll",
-            "scottish",
-            "paintingwithlight",
-            "sequoia",
-            "clearsky",
-            "pwl",
-            "lighttrail",
-            "benmore",
-            "lookingintothedistance",
-            "benmoregardens",
-            "landscapeformat",
-            "youngergardens",
-            "managedbyclickandpraysflickrmanagr",
-            "lighttrailtreesequoiaargyllscotlandscottishlandscapelandscapeformatclearskystarsnightlongexposurepaintingwithlightpwlbenmorebenmoregardensyoungergardenslookingintothedistancebridgefootbridgegbr"
-          ]
-        },
-        {
-          "id": "27275426631",
-          "title": "Encore un matin",
-          "media": "https://live.staticflickr.com/7743/27275426631_c674336ee6.jpg",
-          "date_taken": "2016-05-28 04:44:31",
-          "description": "",
-          "author": "RémyBochu",
-          "views": "2749",
-          "tags": [
-            "sky",
-            "mist",
-            "france",
-            "tree",
-            "nature",
-            "fog",
-            "canon",
-            "landscape",
-            "eos",
-            "outdoor",
-            "ciel",
-            "vittel",
-            "nuages",
-            "paysage",
-            "arbre",
-            "brouillard",
-            "couleur",
-            "vosges",
-            "leverdesoleil",
-            "exterieur",
-            "eos5d",
-            "rémyb",
-            "infinitexposure",
-            "mrmyz"
-          ]
-        }
-      ]
-
+      currentPage: 1,
+      maxPages: null, // Se establece después de la primera solicitud
+      images: [],
+      loading: false,
+      loadingCharge: false,
+      currentTags: [],
+      localTag: "",
+      showScrollButton: false, // Controla la visibilidad del botón
     };
   },
+  computed:{
+    textTitle(){
+      return this.images.length>0 ? 'Estos son los resultados' : 'Que bueno verte de nuevo'
+    }
+  },
   methods: {
+    handleLocalTag(){
+      this.addTag(this.localTag);
+      this.localTag = "";
+    },
+    addTag(tag){
+      this.currentTags.push(tag);
+      this.resetSearch();
+      this.showDetail = false;
+    },
+    deleteTag(tag) {
+      let index = this.currentTags.findIndex((item) => item === tag);
+      if (index !== -1) {
+        this.currentTags.splice(index, 1);
+        this.resetSearch();
+      } else {
+        console.warn("El tag no fue encontrado:", tag);
+      }
+    },
+    handleImageDetail(item){
+      this.currentItem = Object.assign({}, item);
+      this.showDetail = true;
+    },
     handleConfirm() {
-      alert("Confirmación recibida.");
       this.showDetail = false;
     },
     resetSearch() {
@@ -1749,58 +208,96 @@ export default {
     },
     async fetchImages(page) {
       try {
+        if(page ===1){
+          this.loading = true;
+        }else{
+          this.loadingCharge = true;
+        }
+        const response = await axios.get("/api/flickr-feed", {
+          params: {
+            search: this.searchText,
+            per_page: 10,
+            page: page,
+            tags: this.currentTags.join(','),
+          },
+        });
 
-        const response = await axios.get(
-            "/api/flickr-feed",
-            {
-              params: {
-                search: this.searchText,
-                /*tags: "bear,donut",*/
-                sort: "date-taken-desc",
-                per_page: 10,
-                page: page,
-              },
-            }
-        );
+        if (response.data) {
+          const { photos, pagination } = response.data;
+          this.addImagesGradually(photos);
+          // Ordenar las imágenes por el índice
+          this.images.sort((a, b) => a.index - b.index);
 
-        // Asigna la respuesta al array `images`
-        if (response.data && Array.isArray(response.data)) {
-
-          let responseImages = response.data.map((item) => ({
-            id: item.id,
-            title: item.title,
-            media: item.media,
-            description: item.description,
-            author: item.author,
-            views: item.views,
-            tags: item.tags,
-          }));
-          // Actualizar imágenes y datos de paginación
-          this.images = [
-            ...this.images,
-            ...responseImages
-          ];
-          this.currentPage = page;
-          this.maxPages = 5;
-
-         /* if (total_pages) {
-            this.maxPages = total_pages;
-          }*/
+          this.currentPage = pagination.page;
+          this.maxPages = pagination.pages;
+          if(page ===1){
+            this.loading = false;
+          }else{
+            this.loadingCharge = false;
+          }
         } else {
           console.warn("No se encontraron imágenes.");
+          this.loading = false;
         }
       } catch (error) {
         console.error("Error al cargar las imágenes:", error);
+        this.loading = false;
       }
     },
+    addImagesGradually(photos) {
+      const newImages = photos.map((item, index) => ({
+        id: item.id,
+        title: item.title,
+        media: item.media,
+        description: item.description,
+        author: item.author,
+        views: item.views,
+        tags: item.tags,
+        index: this.images.length + index,
+      }));
 
+      newImages.forEach((image, idx) => {
+        setTimeout(() => {
+          this.images.push(image);
+        }, idx * 500);
+      });
+    },
+    handleScroll() {
+      this.showScrollButton = window.scrollY > 200;
+    },
+    scrollToTop() {
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    },
   },
   mounted() {
-    //this.fetchImages();
-  }
+    window.addEventListener("scroll", this.handleScroll);
+  },
+  beforeDestroy() {
+    // Limpiar el evento al destruir el componente
+    window.removeEventListener("scroll", this.handleScroll);
+  },
 }
 </script>
 
 <style scoped>
+/* Animación de fade + slide desde abajo */
+.image-slide-up {
+  opacity: 0;
+  transform: translateY(50px); /* Comienza 50px debajo */
+  animation: slideUp 1s ease-out forwards;
+}
 
+@keyframes slideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(50px); /* Empieza desde abajo */
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0); /* Termina en su posición original */
+  }
+}
 </style>

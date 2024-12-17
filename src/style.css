@@ -11,6 +11,9 @@
 @layer utilities {
 
 
+    .input-tag {
+       @apply text-gray-30 focus:ring-transparent focus:outline-none focus:border-none w-1/2
+    }
     .input-wrapper {
         @apply relative bg-inherit;
     }
