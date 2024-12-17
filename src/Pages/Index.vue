@@ -1,12 +1,12 @@
 <template>
   <div>
-    <div class="flex flex-row">
-      <div class="w-6/12">
-        <div class="px-24 pt-12 3xl:pt-24 3xl:p-36">
+    <div class="block lg:flex lg:flex-row">
+      <div class="w-12/12 md:w-6/12">
+        <div class="px-10 md:px-24 pt-12 3xl:pt-24 3xl:p-36">
           <div class="flexCenter pb-0 ">
             <logo :width="currentBreakpoint ==='3xl' ? 308: 215" :height="currentBreakpoint ==='3xl' ? 193: 135"></logo>
           </div>
-          <div class="w-10/12 3xl:w-10/12">
+          <div class="w-11/12 md:w-10/12 3xl:w-10/12">
             <h1 class="bold-40 3xl:bold-60 text-primary">
               ¡La comunidad de blue medical!
             </h1>
@@ -36,7 +36,7 @@
         </div>-->
       </div>
       <!-- Imagen -->
-      <div class="w-6/12 bg-primary h-screen">
+      <div class="w-12/12 md:w-6/12 bg-primary h-48 md:h-screen">
         <img
             src="/img/bg-index.png"
             loading="lazy"

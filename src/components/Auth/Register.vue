@@ -2,14 +2,14 @@
   <div>
     <div class="flex flex-row">
       <!-- Formulario de registro -->
-      <div class="w-6/12">
-        <div class="px-24 pt-5 3xl:pt-14 3xl:p-36">
+      <div class="w-10/12 md:w-6/12">
+        <div class="px-10 md:px-24 pt-5 3xl:pt-24 3xl:p-36">
           <!-- Logo -->
           <div class="flexCenter pb-0">
             <logo :width="currentBreakpoint === '3xl' ? 290 : 160" :height="currentBreakpoint === '3xl' ? 150 : 90"></logo>
           </div>
           <!-- Título -->
-          <div class="w-11/12 3xl:w-10/12">
+          <div class="w-12/12 md:w-11/12 3xl:w-10/12">
             <h1 class="bold-20 3xl:bold-32 text-primary">
               ¡Registrarse en bluex es muy fácil!
             </h1>
@@ -19,7 +19,7 @@
           </div>
           <!-- Inputs -->
           <form @submit.prevent="registerUser">
-            <div class="bg-white px-5 3xl:px-20 pt-5">
+            <div class="bg-white md:px-5 3xl:px-20 pt-5">
               <div v-for="field in formFields" :key="field.id" class="input-wrapper mt-5">
                 <input
                     v-model="data[field.model]"
@@ -63,7 +63,7 @@
             </div>
             <!-- Botón de registro -->
             <div class="flexCenter py-2">
-              <button :disabled="loading" class="btn-primary btn-large btn-dense mt-5 w-10/12 3xl:w-9/12">
+              <button :disabled="loading" class="btn-primary btn-large btn-dense mt-5 w-12/12 md:w-10/12 3xl:w-9/12">
                 {{loading? "Espera por favor" : "Registrarse"}}
               </button>
             </div>
@@ -77,15 +77,14 @@
             <p class="bold-13 3xl:bold-24 text-gray-30 mt-4">¿Ya tienes cuenta?</p>
           </div>
           <div class="flexCenter py-1">
-            <button :disabled="loading" @click="goToRoute('Login')" class="btn-primary-outline btn-large btn-dense mt-3 w-10/12 3xl:w-8/12">
+            <button :disabled="loading" @click="goToRoute('Login')" class="btn-primary-outline btn-large btn-dense mt-3 w-12/12 md:w-10/12 3xl:w-8/12">
               Iniciar sesión
             </button>
           </div>
         </div>
       </div>
-
       <!-- Imagen -->
-      <div class="w-6/12 bg-primary h-screen">
+      <div class="w-2/12 md:w-6/12 bg-primary h-screen">
         <img
           src="/img/bg-register.jpg"
           loading="lazy"
