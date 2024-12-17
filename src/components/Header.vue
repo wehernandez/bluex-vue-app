@@ -1,58 +1,24 @@
-<script>
-import Logo from "../Icons/Logo.vue";
-
-export default {
-  name: "Header",
-  components: {Logo},
-  data: function () {
-    return{
-      scrolled: false,
-      isHidden: true
-    }
-  },
-  computed: {
-
-  },
-  mounted() {
-    window.addEventListener('scroll', this.handleScroll);
-  },
-  beforeDestroy() {
-    window.removeEventListener('scroll', this.handleScroll);
-  },
-  methods:{
-    toggleNav() {
-      this.isHidden = !this.isHidden;
-    },
-    handleScroll() {
-      if (window.scrollY > 50) {
-        this.scrolled = true;
-      } else {
-        this.scrolled = false;
-      }
-    },
-  }
-}
-</script>
-
 <template>
   <div class="fixed top-0 left-0 right-0 z-40" :class="{ 'shadow-2xl transition-shadow duration-300': scrolled }">
     <div class="bg-gray-15">
       <div class="max-container flexBetween padding-container relative z-30 py-2">
+        <!-- Logo -->
         <div>
           <logo :width="100" :height="50" />
         </div>
-        <div class="hidden lg:flex lg:flex-row">
+
+        <!-- Información del usuario -->
+        <div class="hidden lg:flex lg:flex-row" v-if="user">
           <div>
-            <p class="font-bold text-primary pb-0">Fernando Blue</p>
-            <small class="text-gray-50">fernando@blue.com</small>
+            <p class="font-bold text-primary pb-0">{{ user.name }} {{ user.lastname }}</p>
+            <small class="text-gray-50">{{ user.email }}</small>
           </div>
           <div class="pl-4">
-            <button class="btn-primary-outline btn-dense">
+            <button @click="logout" class="btn-primary-outline btn-dense">
               Cerrar sesión
             </button>
           </div>
         </div>
-
 
         <!-- Botón de menú para pantallas pequeñas -->
         <div class="block lg:hidden">
@@ -63,20 +29,20 @@ export default {
             </svg>
           </button>
         </div>
-
       </div>
+
       <!-- Menú desplegable para pantallas pequeñas -->
-      <div :class="{'block': !isHidden, 'hidden': isHidden}" id="nav-content" class="h-screen w-full lg:hidden m-4">
+      <div :class="{'block': !isHidden, 'hidden': isHidden}" id="nav-content" class="h-screen w-full lg:hidden m-4" v-if="user">
         <ul class="flex flex-col gap-8 mt-20">
-          <li class="">
+          <li>
             <div class="text-center">
-              <p class="font-bold text-primary pb-0">Fernando Blue</p>
-              <small class="text-gray-50">fernando@blue.com</small>
+              <p class="font-bold text-primary pb-0">{{ user.name }}</p>
+              <small class="text-gray-50">{{ user.email }}</small>
             </div>
           </li>
-          <li class="">
+          <li>
             <div class="flex justify-center">
-              <button class="btn-primary-outline btn-dense">
+              <button @click="logout" class="btn-primary-outline btn-dense">
                 Cerrar sesión
               </button>
             </div>
@@ -86,6 +52,70 @@ export default {
     </div>
   </div>
 </template>
+
+<script>
+import Logo from "../Icons/Logo.vue";
+import axios from "axios";
+
+export default {
+  name: "Header",
+  components: { Logo },
+  data() {
+    return {
+      user: null, // Almacena la información del usuario
+      scrolled: false,
+      isHidden: true,
+    };
+  },
+  mounted() {
+    this.fetchUser();
+    window.addEventListener("scroll", this.handleScroll);
+  },
+  beforeUnmount() {
+    window.removeEventListener("scroll", this.handleScroll);
+  },
+  methods: {
+    // Recupera los datos del usuario autenticado
+    async fetchUser() {
+      const token = localStorage.getItem("authToken");
+      if (!token) return;
+
+      try {
+        const response = await axios.get("https://flickr-service.onrender.com/auth/me", {
+          headers: {
+            Authorization: `${token}`,
+          },
+        });
+        this.user = response.data; // Guarda el usuario en el estado
+        console.log("User data:", this.user);
+      } catch (error) {
+        console.error("Error fetching user data:", error.response?.data || error.message);
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("userData");
+        this.user = null;
+      }
+    },
+
+    // Maneja el cierre de sesión
+    logout() {
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("userData");
+      this.user = null;
+      this.$router.push({ name: "Login" });
+    },
+
+    // Maneja el scroll
+    handleScroll() {
+      this.scrolled = window.scrollY > 50;
+    },
+
+    // Muestra/oculta el menú en móviles
+    toggleNav() {
+      this.isHidden = !this.isHidden;
+    },
+  },
+};
+</script>
 
 <style scoped>
 .active-class {

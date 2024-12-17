@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  vue-app:
+    build: .
+    ports:
+      - "8080:5173" # Mapea el puerto de Vite (interno) al 8080 (host)
+    volumes:
+      - .:/app      # Monta el código fuente local en el contenedor
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true # Ayuda en entornos Docker para recargar cambios
