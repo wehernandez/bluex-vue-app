@@ -1,34 +1,34 @@
 <template>
   <div>
     <Header :user="user"></Header>
-    <div class="pt-40">
+    <div class="pt-32 md:pt-40">
       <div class="w-12/12 relative">
-        <h1 class="bold-40 text-primary text-center">
+        <h1 class="bold-32 md:bold-40 text-primary text-center">
           ¡{{textTitle}} <span class="text-secondary"> {{ user ? user.name : "" }}</span>!
         </h1>
         <div class="absolute top-0 left-0">
           <img
               :src="handLeft"
               loading="lazy"
-              class=""
+              class="w-32 md:w-full"
           />
         </div>
         <div class="absolute top-0 right-0">
           <img
               :src="handRight"
               loading="lazy"
-              class=""
+              class="w-32 md:w-full"
           />
         </div>
       </div>
-      <div class="max-container padding-container ">
+      <div class="max-container padding-container">
         <div class="flexCenter flex-col pb-10">
-          <div class="w-6/12 py-5">
+          <div class="w-12/12 md:w-6/12 py-5">
             <h3 class="bold-24 text-gray-30">
               ¿Cuál es tú feed hoy?
             </h3>
           </div>
-          <div class="w-6/12 relative">
+          <div class="w-full md:w-6/12 relative">
             <input
                 v-model="searchText"
                 @keydown.enter="resetSearch"

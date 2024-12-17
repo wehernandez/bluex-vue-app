@@ -1,12 +1,12 @@
 <template>
   <div>
     <div class="flex flex-row">
-      <div class="w-6/12">
-        <div class="px-24 pt-5 3xl:pt-24 3xl:p-36">
+      <div class="w-10/12 md:w-6/12">
+        <div class="px-10 md:px-24 pt-5 3xl:pt-24 3xl:p-36">
           <div class="flexCenter pb-0 ">
             <logo :width="currentBreakpoint === '3xl' ? 308 : 215" :height="currentBreakpoint === '3xl' ? 193 : 135"></logo>
           </div>
-          <div class="w-10/12 3xl:w-10/12">
+          <div class="w-12/12 md:w-10/12 3xl:w-10/12">
             <h1 class="bold-32 3xl:bold-60 text-primary">
               ¡Inicia sesión!
             </h1>
@@ -15,7 +15,7 @@
             </p>
           </div>
           <div>
-            <div class="bg-white px-20 pt-6">
+            <div class="bg-white px-2 md:px-20 pt-6">
               <div class="input-wrapper">
                 <input
                   v-model="formData.email"
@@ -74,7 +74,7 @@
             </div>
           </div>
           <div class="flexCenter py-5">
-            <button @click="loginUser" class="btn-primary btn-large btn-dense mt-5 w-8/12 3xl:w-8/12">
+            <button @click="loginUser" class="btn-primary btn-large btn-dense mt-5 w-12/12 md:w-8/12 3xl:w-8/12">
               Iniciar sesión
             </button>
           </div>
@@ -85,14 +85,14 @@
             </p>
           </div>
           <div class="flexCenter py-2">
-            <button @click="goToRoute('Register')" class="btn-primary-outline btn-large btn-dense mt-5 w-11/12 3xl:w-8/12">
+            <button @click="goToRoute('Register')" class="btn-primary-outline btn-large btn-dense mt-5 w-12/12 md:w-11/12 3xl:w-8/12">
               Regístrate
             </button>
           </div>
         </div>
       </div>
       <!-- Imagen -->
-      <div class="w-6/12 bg-primary h-screen">
+      <div class="w-2/12 md:w-6/12 bg-primary h-screen">
         <img
           src="/img/bg-login.jpg"
           loading="lazy"

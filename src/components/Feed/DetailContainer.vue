@@ -1,13 +1,13 @@
 <template>
-  <div class="w-full flex">
-    <div class="w-6/12">
+  <div class="w-full md:flex">
+    <div class="w-12/12 md:w-6/12">
       <img
           :src="currentItem.media"
           :alt="currentItem.title"
-          class="w-full min-h-96 rounded-lg shadow-md object-cover"
+          class="w-full max-h-72 min-h-72 md:max-h-none md:min-h-96 rounded-lg shadow-md object-cover"
       />
     </div>
-    <div class="w-6/12 px-10 pt-3" v-if="currentItem.title">
+    <div class="w-12/12 md:w-6/12 px-10 pt-3" v-if="currentItem.title">
       <h1 class="text-3xl mt-4  text-primary font-bold">{{currentItem.title || "Sin titulo"}}</h1>
       <div class="max-h-96 overflow-y-auto">
         <p class="text-gray-50 mt-5" v-html="currentItem.description"></p>
