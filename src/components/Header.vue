@@ -59,49 +59,40 @@ import axios from "axios";
 
 export default {
   name: "Header",
+  props: {
+    user: {
+      type: Object,
+      required: true,
+    }
+  },
   components: { Logo },
   data() {
     return {
-      user: null, // Almacena la información del usuario
       scrolled: false,
       isHidden: true,
     };
   },
   mounted() {
-    this.fetchUser();
     window.addEventListener("scroll", this.handleScroll);
   },
   beforeUnmount() {
     window.removeEventListener("scroll", this.handleScroll);
   },
   methods: {
-    // Recupera los datos del usuario autenticado
-    async fetchUser() {
-      const token = localStorage.getItem("authToken");
-      if (!token) return;
-
-      try {
-        const response = await axios.get("https://flickr-service.onrender.com/auth/me", {
-          headers: {
-            Authorization: `${token}`,
-          },
-        });
-        this.user = response.data; // Guarda el usuario en el estado
-        console.log("User data:", this.user);
-      } catch (error) {
-        console.error("Error fetching user data:", error.response?.data || error.message);
-        localStorage.removeItem("authToken");
-        localStorage.removeItem("userData");
-        this.user = null;
-      }
-    },
-
     // Maneja el cierre de sesión
     logout() {
-      localStorage.removeItem("authToken");
-      localStorage.removeItem("userData");
-      this.user = null;
-      this.$router.push({ name: "Login" });
+      this.$notify(
+          {
+            group: 'generic',
+            title: 'Hasta luego!',
+          },
+          2000,
+      )
+      setTimeout(() => {
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("userData");
+        this.$router.push({ name: "Login" });
+      }, 2000);
     },
 
     // Maneja el scroll

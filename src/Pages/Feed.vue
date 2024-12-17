@@ -1,21 +1,21 @@
 <template>
   <div>
-    <Header></Header>
+    <Header :user="user"></Header>
     <div class="pt-40">
       <div class="w-12/12 relative">
         <h1 class="bold-40 text-primary text-center">
-          ¡{{textTitle}}<span class="text-secondary"> Fernando</span>!
+          ¡{{textTitle}} <span class="text-secondary"> {{ user ? user.name : "" }}</span>!
         </h1>
         <div class="absolute top-0 left-0">
           <img
-              src="/img/manoRock.png"
+              :src="handLeft"
               loading="lazy"
               class=""
           />
         </div>
         <div class="absolute top-0 right-0">
           <img
-              src="/img/manoGood.png"
+              :src="handRight"
               loading="lazy"
               class=""
           />
@@ -25,7 +25,7 @@
         <div class="flexCenter flex-col pb-10">
           <div class="w-6/12 py-5">
             <h3 class="bold-24 text-gray-30">
-              ¿Cual es tu feed hoy?
+              ¿Cuál es tú feed hoy?
             </h3>
           </div>
           <div class="w-6/12 relative">
@@ -35,7 +35,7 @@
                 type="text"
                 class="input-field-search py-7"
                 placeholder="Escribe aquí lo que deseas buscar">
-            <div class="absolute top-2 right-3">
+            <div @click="resetSearch" class="absolute top-2 right-3">
               <img
                   src="/img/search.png"
                   loading="lazy"
@@ -47,7 +47,7 @@
               <input
                   @keydown.enter="handleLocalTag()"
                   v-model="localTag"
-                  class="ml-4 input-tag" type="text" placeholder="Añade tags a tu busqueda escribiendo acá">
+                  class="ml-4 input-tag" type="text" placeholder="Añade tags a tu búsqueda escribiendo acá">
             </div>
             <div>
               <Tag
@@ -59,6 +59,16 @@
                   :text="tag">
               </Tag>
             </div>
+          </div>
+        </div>
+        <div v-if="!loading && searched === true && images.length < 1" class="p-4 flex flex-col items-center justify-center">
+          <div class="text-left">
+            <h1 class="font-bold text-4xl text-primary">
+              Probemos suerte con algo más...
+            </h1>
+            <h3 class="font-bold text-2xl text-gray-500">
+              No hemos podido obtener resultados.
+            </h3>
           </div>
         </div>
         <div v-if="loading">
@@ -167,11 +177,47 @@ export default {
       currentTags: [],
       localTag: "",
       showScrollButton: false, // Controla la visibilidad del botón
+      user: null, // Almacena la información del usuario
+      searched : false,
     };
   },
   computed:{
     textTitle(){
-      return this.images.length>0 ? 'Estos son los resultados' : 'Que bueno verte de nuevo'
+      if (this.loading) {
+        return "Espera un momento, ";
+      }
+
+      if(this.searched === true && this.images.length < 1 ){
+        return "Algo pasó, "
+      }
+
+      return this.images.length > 0 ? 'Estos son los resultados' : 'Que bueno verte de nuevo'
+    },
+    handLeft(){
+      if (this.loading) {
+        return "";
+      }
+      if (this.images.length > 0 && !this.searched) {
+        return "/img/manoRock.png";
+      }
+
+      if (this.searched && this.images.length === 0) {
+        return "/img/manoBad.png";
+      }
+      return "/img/manoRock.png";
+    },
+    handRight(){
+      if (this.loading) {
+        return "";
+      }
+      if (this.images.length > 0 && !this.searched) {
+        return "/img/manoGood.png";
+      }
+
+      if (this.searched && this.images.length === 0) {
+        return "/img/manoSuerte.png";
+      }
+      return "/img/manoGood.png";
     }
   },
   methods: {
@@ -204,12 +250,14 @@ export default {
       this.images = [];
       this.currentPage = 1;
       this.maxPages = 5;
+      this.searched = false;
       this.fetchImages(1);
     },
     async fetchImages(page) {
       try {
         if(page ===1){
           this.loading = true;
+          this.searched = true;
         }else{
           this.loadingCharge = true;
         }
@@ -271,8 +319,27 @@ export default {
         behavior: "smooth",
       });
     },
+    async fetchUser() {
+      const token = localStorage.getItem("authToken");
+      if (!token) return;
+
+      try {
+        const response = await axios.get("api/auth/me", {
+          headers: {
+            Authorization: `${token}`,
+          },
+        });
+        this.user = response.data;
+      } catch (error) {
+        console.error("Error fetching user data:", error.response?.data || error.message);
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("userData");
+        this.user = null;
+      }
+    },
   },
   mounted() {
+    this.fetchUser();
     window.addEventListener("scroll", this.handleScroll);
   },
   beforeDestroy() {
