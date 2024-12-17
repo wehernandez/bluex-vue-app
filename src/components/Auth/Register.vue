@@ -11,40 +11,64 @@
           <!-- Título -->
           <div class="w-11/12 3xl:w-10/12">
             <h1 class="bold-20 3xl:bold-32 text-primary">
-              ¡Registrarse en bluex es muy facil!
+              ¡Registrarse en bluex es muy fácil!
             </h1>
             <p class="bold-13 3xl:bold-20 text-gray-30 mt-2">
               Por favor llena todos los campos solicitados
             </p>
           </div>
           <!-- Inputs -->
-          <div class="bg-white px-5 3xl:px-20 pt-5">
-            <div v-for="field in formFields" :key="field.id" class="input-wrapper mt-5">
-              <input
-                v-model="data[field.model]"
-                :type="field.type"
+          <form @submit.prevent="registerUser">
+            <div class="bg-white px-5 3xl:px-20 pt-5">
+              <div v-for="field in formFields" :key="field.id" class="input-wrapper mt-5">
+                <input
+                    v-model="data[field.model]"
+                    :type="field.id === 'password' && showPassword ? 'text' : field.type"
                 :id="field.id"
                 :name="field.id"
                 :placeholder="field.placeholder"
                 class="input-field peer"
                 required
-              />
-              <label
-                :for="field.id"
-                class="input-label-base -top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-50 peer-placeholder-shown:top-2 peer-focus:-top-3 peer-focus:text-primary peer-focus:text-sm"
-              >
-                {{ field.label }}
-              </label>
+                />
+                <label
+                    :for="field.id"
+                    class="input-label-base -top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-50 peer-placeholder-shown:top-2 peer-focus:-top-3 peer-focus:text-primary peer-focus:text-sm"
+                >
+                  {{ field.label }}
+                </label>
+
+                <!-- Icono para mostrar/ocultar la contraseña -->
+                <button
+                    v-if="field.id === 'password'"
+                    type="button"
+                    class="absolute right-4 top-2"
+                    @click="showPassword = !showPassword"
+                    :aria-label="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                >
+                  <span v-if="showPassword" class="">
+                     <img
+                         src="/img/eye.png"
+                         loading="lazy"
+                         class="pt-1"
+                     />
+                  </span>
+                  <span v-else>
+                    <img
+                        src="/img/eyeNot.png"
+                        loading="lazy"
+                    />
+                  </span>
+                </button>
+              </div>
             </div>
-          </div>
-
-          <!-- Botón de registro -->
-          <div class="flexCenter py-2">
-            <button @click="registerUser" class="btn-primary btn-large btn-dense mt-5 w-10/12 3xl:w-9/12">
-              Registrarse
-            </button>
-          </div>
-
+            <!-- Botón de registro -->
+            <div class="flexCenter py-2">
+              <button :disabled="loading" class="btn-primary btn-large btn-dense mt-5 w-10/12 3xl:w-9/12">
+                {{loading? "Espera por favor" : "Registrarse"}}
+              </button>
+            </div>
+          </form>
+          <div v-if="errorMessage" class="text-red-500 mt-2 text-sm text-center">{{ errorMessage }}</div>
           <!-- Separador -->
           <div class="h-px bg-gray-200 my-4"></div>
 
@@ -53,7 +77,7 @@
             <p class="bold-13 3xl:bold-24 text-gray-30 mt-4">¿Ya tienes cuenta?</p>
           </div>
           <div class="flexCenter py-1">
-            <button @click="goToRoute('Login')" class="btn-primary-outline btn-large btn-dense mt-3 w-10/12 3xl:w-8/12">
+            <button :disabled="loading" @click="goToRoute('Login')" class="btn-primary-outline btn-large btn-dense mt-3 w-10/12 3xl:w-8/12">
               Iniciar sesión
             </button>
           </div>
@@ -63,7 +87,7 @@
       <!-- Imagen -->
       <div class="w-6/12 bg-primary h-screen">
         <img
-          src="/img/bg-index.png"
+          src="/img/bg-register.jpg"
           loading="lazy"
           class="w-full h-full object-cover object-right-center"
         />
@@ -97,6 +121,8 @@ export default {
       ],
       successMessage: "",
       errorMessage: "",
+      loading: false,
+      showPassword: false,
     };
   },
   computed: {
@@ -109,29 +135,62 @@ export default {
     },
   },
   methods: {
+    validateForm() {
+      // Reset error message
+      this.errorMessage = "";
+
+      // Validación de email
+      const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      if (!this.data.email || !emailRegex.test(this.data.email)) {
+        this.errorMessage = "Por favor ingrese un correo electrónico válido.";
+        return false;
+      }
+
+      // Validación de name y lastname
+      if (!this.data.name || !this.data.lastname) {
+        this.errorMessage = "Los campos de nombre y apellido no pueden estar vacíos.";
+        return false;
+      }
+
+      // Validación de password (mínimo 8 caracteres, una mayúscula y un carácter especial)
+      const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+      if (!this.data.password || !passwordRegex.test(this.data.password)) {
+        this.errorMessage = "La contraseña debe tener al menos 8 caracteres, una mayúscula y un carácter especial.";
+        return false;
+      }
+
+      return true;
+    },
     async registerUser() {
-      try {
-        const response = await axios.post("/api/auth/register", this.data);
-        this.$notify(
-            {
-              group: 'generic',
-              title: 'Excelente!',
-              text: 'Usuario registrado con éxito. Serás redirigido al inicio de sesión.',
-            },
-            5000,
-        )
-        this.$router.push({ name: "Login" }); // Redirige al login
-      } catch (error) {
-        const errorMsg = error.response?.data?.error || "Hubo un error al registrar el usuario.";
-        this.$notify(
-            {
-              group: 'error',
-              title: 'Lo sentimos!',
-              text: errorMsg,
-            },
-            5000,
-        )
-        console.error("Error al registrar usuario:", error.response?.data || error.message);
+      if(this.validateForm()){
+        try {
+          this.loading = true;
+          const response = await axios.post("/api/auth/register", this.data);
+          this.$notify(
+              {
+                group: 'generic',
+                title: 'Excelente!',
+                text: 'Usuario registrado con éxito. Serás redirigido al inicio de sesión.',
+              },
+              5000,
+          )
+          setTimeout(() => {
+            this.loading = false;
+            this.$router.push({ name: "Login" });
+          }, 3000);
+        } catch (error) {
+          this.loading = false;
+          const errorMsg = error.response?.data?.error || "Hubo un error al registrar el usuario.";
+          this.$notify(
+              {
+                group: 'error',
+                title: 'Lo sentimos!',
+                text: errorMsg,
+              },
+              5000,
+          )
+          console.error("Error al registrar usuario:", error.response?.data || error.message);
+        }
       }
     },
     goToRoute(routeName) {

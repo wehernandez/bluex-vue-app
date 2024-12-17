@@ -36,7 +36,7 @@
               <div class="input-wrapper mt-5">
                 <input
                   v-model="formData.password"
-                  type="password"
+                  :type="showPassword ? 'text' : 'password'"
                   id="password"
                   name="password"
                   placeholder="Contraseña"
@@ -49,6 +49,27 @@
                 >
                   Contraseña
                 </label>
+                <!-- Icono para mostrar/ocultar la contraseña -->
+                <button
+                    type="button"
+                    class="absolute right-4 top-2"
+                    @click="showPassword = !showPassword"
+                    :aria-label="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                >
+                  <span v-if="showPassword" class="">
+                     <img
+                         src="/img/eye.png"
+                         loading="lazy"
+                         class="pt-1"
+                     />
+                  </span>
+                  <span v-else>
+                    <img
+                        src="/img/eyeNot.png"
+                        loading="lazy"
+                    />
+                  </span>
+                </button>
               </div>
             </div>
           </div>
@@ -73,7 +94,7 @@
       <!-- Imagen -->
       <div class="w-6/12 bg-primary h-screen">
         <img
-          src="/img/bg-index.png"
+          src="/img/bg-login.jpg"
           loading="lazy"
           class="w-full h-full object-cover object-right-center"
         />
@@ -105,6 +126,8 @@ export default {
         "2xl": 1536,
         "3xl": 1680,
       },
+      showPassword: false,
+      loading: false,
     };
   },
   computed: {
@@ -118,6 +141,7 @@ export default {
   methods: {
     async loginUser() {
       try {
+        this.loading = true;
         const response = await axios.post(
           "api/auth/login",
           this.formData
@@ -132,12 +156,14 @@ export default {
             {
               group: 'generic',
               title: 'Excelente!',
-              text: 'Inicio de sesión exitoso.',
+              text: 'Bienvenido',
             },
-            5000,
+            3000,
         )
-        // Redirige al dashboard
-        this.goToRoute("feed");
+        setTimeout(() => {
+          this.loading = false;
+          this.goToRoute("feed");
+        }, 1000);
       } catch (error) {
         console.error("Error al iniciar sesión:", error.response?.data || error.message);
         this.$notify(
