@@ -118,10 +118,8 @@ export default {
   methods: {
     async loginUser() {
       try {
-        console.log("Iniciando sesión con:", this.formData);
-
         const response = await axios.post(
-          "https://flickr-service.onrender.com/auth/login",
+          "api/auth/login",
           this.formData
         );
 
@@ -130,15 +128,26 @@ export default {
         // Guarda el token y el usuario en localStorage
         localStorage.setItem("authToken", token);
         localStorage.setItem("userData", JSON.stringify(user));
-
-        console.log("Usuario autenticado:", user);
-
-        alert("Inicio de sesión exitoso!");
+        this.$notify(
+            {
+              group: 'generic',
+              title: 'Excelente!',
+              text: 'Inicio de sesión exitoso.',
+            },
+            5000,
+        )
         // Redirige al dashboard
         this.goToRoute("feed");
       } catch (error) {
         console.error("Error al iniciar sesión:", error.response?.data || error.message);
-        alert("Credenciales incorrectas. Inténtalo de nuevo.");
+        this.$notify(
+            {
+              group: 'error',
+              title: 'Lo sentimos!',
+              text: 'Credenciales incorrectas. Inténtalo de nuevo.',
+            },
+            5000,
+        )
       }
     },
     goToRoute(routeName) {
